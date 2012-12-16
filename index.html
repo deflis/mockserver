@@ -36,7 +36,7 @@
                 });
                 $('#file').submit(function(){
                     var file = $('#filename').val();
-                    $.getJSON('/load?file=', { file : file }, parse_response).fail(parse_response);
+                    $.getJSON('/load', { file : file }, parse_response).fail(parse_response);
                     return false;
                 });
             });
