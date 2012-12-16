@@ -5,28 +5,38 @@
             $(function(){
                 var parse_response = function(response) {
                     console.log(response);
+                    if (response.responseText){
+                        response = JSON.parse(response.responseText);
+                    }
                     alert(response['status']);
                 };
-                $('#delete_log').click(function(){
+                $('#delete_log').click(function(e){
+                    e.preventDefault();
                     $.ajax({
                         type: 'DELETE',
                         url: '/log'
-                    }).done(parse_response);
-                }).text('clear log');
-                $('#get_log').click(function(){
+                    }).always(parse_response);
+                });
+                $('#get_log').click(function(e){
+                    e.preventDefault();
                     $.getJSON('/log', function(response){
                         console.log(response);
                         $('<p>').insertAfter('#get_log:parent').append(
                         $("<textarea>").text(JSON.stringify(response, null, 4)));
-                    });
-                }).attr('href', '#');
+                    }).fail(parse_response);
+                });
                 $('#load').submit(function(){
                     var data = $('#load_string').text();
                     $.ajax({
                         type: 'PUT',
                         url: '/load',
                         data: data
-                    }).done(parse_response);
+                    }).always(parse_response);
+                    return false;
+                });
+                $('#file').submit(function(){
+                    var file = $('#filename').val();
+                    $.getJSON('/load?file=', { file : file }, parse_response).fail(parse_response);
                     return false;
                 });
             });
@@ -35,12 +45,19 @@
     <body>
         <h1>Mock server is http server.</h1>
         <p><a href="/README.md">README</a></p>
-        <p><a href="/log" id='get_log'>log</a></p>
-        <p><a href="#" id="delete_log"></a><p>
-        <form id="load">
-            <textarea name="message" id="load_string">{"/sample":"sample"}</textarea>
+        <h2>/log</h2>
+        <p><a href="/log" id='get_log'>GET /log</a></p>
+        <p><a href="/log?_method=delete" id="delete_log">DETELE /log</a><p>
+        <h2>/load</h2>
+        <form method="POST" action="/load" id="load">
+            <textarea name="data" id="load_string">{"/sample":"sample"}</textarea>
             <input type="submit">
         </form>
-        <p><a href="/sample">sample</a><p>
+        <form method="POST" action="/load" id="file">
+            <input type="TEXT" name="file" value="sample.json" id="filename">
+            <input type="submit">
+        </form>
+        <h2>sample</h2>
+        <p><a href="/sample">/sample</a><p>
     </body>
 </html>
