@@ -8,28 +8,31 @@ receive = function(req, func)
     var received = false;
     var data = '';
     req.on('data', function(chunk)
-            {
-                received = true;
-                data += chunk.toString();
-            });
+    {
+        received = true;
+        data += chunk.toString();
+    });
     req.on('end', function()
-            {
-                if (received)
-        func(data);
-                else
-        func(null);
-            });
+    {
+        if (received)
+        {
+            func(data);
+        }
+        else
+        {
+            func(null);
+        }
+    });
 };
-writelog = function(req, res, data, status, headers, response_data, file){
+writelog = function(req, res, data, status, headers, response_data, file)
+{
     var parsed = url.parse(req.url);
     var path = parsed.pathname;
     var query = querystring.parse(parsed.query);
-    var post;
-    if(typeof req.headers['content-type'] == 'string' && req.headers['content-type'].indexOf('multipart/form-data') != -1)
     var post = data != null ? querystring.parse(data) : undefined;
     logdata = {
         request :
-            { url : req.url, path: path, method : req.method, headers : req.headers, parsed : parsed, data : data, querystring: query, post : post },
+            { url : req.url, path: path, method : req.method, headers : req.headers, parsed : parsed, data : data != null ? data.toString() : undefined, querystring: query, post : post },
         response :
             { status : status, headers : headers, data: response_data.toString() , file : file }
     };
@@ -45,41 +48,125 @@ var log = [];
 server = http.createServer(function (req, res) {
     var parsed = url.parse(req.url);
     var path = parsed.pathname;
+    var query = querystring.parse(parsed.query);
     console.time(path);
     var headers = {'Content-Type': 'text/html'};
     if (path == '/load' && req.method == 'PUT')
     {
+        headers = {'Content-Type': 'application/json'};
         receive(req, function(data)
+        {
+            var status, response_data;
+            console.log(data);
+            try
             {
-                var status, response_data;
-                headers = {'Content-Type': 'application/json'};
-                console.log(data);
-                try
+                obj = JSON.parse(data);
+                status = 200;
+                response_data = JSON.stringify({status: 'OK', data : obj});
+            }
+            catch(e)
+            {
+                console.log(e);
+                status = 500;
+                response_data = JSON.stringify({status: 'NG', data : data});
+            }
+            res.writeHead(status, headers);
+            res.end(response_data);
+            console.timeEnd(path);
+            writelog(req, res, data, status, headers, response_data);
+        });
+    }
+    else if (path == '/load')
+    {
+        headers = {'Content-Type': 'application/json'};
+        receive(req, function(data)
+        {
+            var post = data != null ? querystring.parse(data) : {};
+            var file;
+            if(query['file'] !== undefined)
+            {
+                file = query['file'];
+            }
+            if(post['file'] !== undefined)
+            {
+                file = post['file'];
+            }
+            if(file !== undefined && fs.existsSync(file))
+            {
+                fs.readFile(file, function(error, _data)
                 {
-                    obj = JSON.parse(data);
-                    status = 200;
-                    response_data = JSON.stringify({status: 'OK', data : obj});
-                }
-                catch(e)
+                    if(!error)
+                    {
+                        try
+                        {
+                            obj = JSON.parse(_data);
+                            status = 200;
+                            response_data = JSON.stringify({status: 'OK', data : obj, file: file});
+                        }
+                        catch(e)
+                        {
+                            console.log(e);
+                            status = 500;
+                            response_data = JSON.stringify({status: 'NG', data : _data, file: file});
+                        }
+                    }
+                    else
+                    {
+                        status = 500;
+                        response_data = JSON.stringify({status: 'NG', file: file});
+                    }
+                    res.writeHead(status, headers);
+                    res.end(response_data)
+                    console.timeEnd(path);
+                    writelog(req, res, data, status, headers, response_data, file);
+                });
+            }
+            else
+            {
+                if (query['data'] !== undefined || post['data'] !== undefined)
                 {
-                    response_data = JSON.stringify({status: 'NG', data : data});
+                    var data;
+                    if(query['data'] !== undefined)
+                    {
+                        data = query['data'];
+                    }
+                    if(post['data'] !== undefined)
+                    {
+                        data = post['data'];
+                    }
+                    try
+                    {
+                        obj = JSON.parse(data);
+                        status = 200;
+                        response_data = JSON.stringify({status: 'OK', data : obj});
+                    }
+                    catch(e)
+                    {
+                        console.log(e);
+                        status = 500;
+                        response_data = JSON.stringify({status: 'NG', data : data});
+                    }
+                } else {
+                    status = 500;
+                    response_data = JSON.stringify({status: 'NG', file: file});
                 }
                 res.writeHead(status, headers);
                 res.end(response_data);
                 console.timeEnd(path);
                 writelog(req, res, data, status, headers, response_data);
-            });
+            }
+        });
+    }
+    else if (path == '/log' && (req.method == 'DELETE' || query['_method'] == 'delete'))
+    {
+        log = [];
+        res.writeHead(200, {'Content-Type': 'application/json'});
+        res.end(JSON.stringify({status:'OK'}));
     }
     else if (path == '/log' && req.method == 'GET')
     {
         res.writeHead(200, {'Content-Type': 'application/json'});
         res.end(JSON.stringify(log));
-    }
-    else if (path == '/log' && req.method == 'DELETE')
-    {
-        log = [];
-        res.writeHead(200, {'Content-Type': 'application/json'});
-        res.end(JSON.stringify({status:'OK'}));
     }
     else
     {
