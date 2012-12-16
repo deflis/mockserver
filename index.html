@@ -1,0 +1,46 @@
+<html>
+    <head>
+        <script src="http://code.jquery.com/jquery-1.8.3.min.js"></script>
+        <script>
+            $(function(){
+                var parse_response = function(response) {
+                    console.log(response);
+                    alert(response['status']);
+                };
+                $('#delete_log').click(function(){
+                    $.ajax({
+                        type: 'DELETE',
+                        url: '/log'
+                    }).done(parse_response);
+                }).text('clear log');
+                $('#get_log').click(function(){
+                    $.getJSON('/log', function(response){
+                        console.log(response);
+                        $('<p>').insertAfter('#get_log:parent').append(
+                        $("<textarea>").text(JSON.stringify(response, null, 4)));
+                    });
+                }).attr('href', '#');
+                $('#load').submit(function(){
+                    var data = $('#load_string').text();
+                    $.ajax({
+                        type: 'PUT',
+                        url: '/load',
+                        data: data
+                    }).done(parse_response);
+                    return false;
+                });
+            });
+        </script>
+    </head>
+    <body>
+        <h1>Mock server is http server.</h1>
+        <p><a href="/README.md">README</a></p>
+        <p><a href="/log" id='get_log'>log</a></p>
+        <p><a href="#" id="delete_log"></a><p>
+        <form id="load">
+            <textarea name="message" id="load_string">{"/sample":"sample"}</textarea>
+            <input type="submit">
+        </form>
+        <p><a href="/sample">sample</a><p>
+    </body>
+</html>
