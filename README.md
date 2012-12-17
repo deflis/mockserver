@@ -12,7 +12,7 @@ nodejsをインストールします。（最近のバージョンを推奨）
 
 mockserverをcloneして、ディレクトリ上で
 
-    node server.js
+`node server.js`
 
 とすると、ポート8888でmockserverが起動します。（2012/12/17現在）
 
@@ -22,14 +22,15 @@ mockserverへのデータ登録はHTTPを用いて行います。
 
 PUTメソッドでJSONをそのままrawで送信するか、GETもしくはPOSTでdataパラメータにJSONを指定します。
 
-    PUT /load
+`PUT /load`
 
     {"/":"test"}
 
+`HTTP/1.1 200 OK`
 
     {"status":"OK","data":{"/":"test"}}
 
-## mockserver の出力データJSONの仕様
+### mockserver の出力データJSONの仕様
 
     {"/path":"data"}
 
@@ -41,20 +42,19 @@ mockserverはHTTPを使ってJSONでログを取得することができます�
 
 GETメソッドで/logにアクセスします。
 
-    GET /log
+`GET /log`
 
     [{"request":{"url":"/","path":"/","method":"GET","headers":{"user-agent":"user_agent","host":"localhost:8888","accept":"*/*"},"parsed":{"pathname":"/","path":"/","href":"/"},"querystring":{}},"response":{"status":200,"headers":{"Content-Type":"text/html"},"data":"test"}}]
-
 
 ## mockserver のログクリア機能
 
 DELETEメソッドで/logにアクセスするとログがクリアされます。
 
-    DETELE /log
+`DETELE /log`
 
     {"status":"OK"}
 
-    GET /log
+`GET /log`
 
     []
 
