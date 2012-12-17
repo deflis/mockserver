@@ -174,13 +174,23 @@ server = http.createServer(function (req, res) {
         {
             if (obj[path] !== undefined)
             {
-                var response_data = obj[path];
-                if (response_data == null) {
-                    status = 200;
-                    res.writeHead(200);
+                var _data = obj[path];
+                if (_data == null) {
+                    status = 404;
                     response_data = 'null';
-                } else {
+                } else if (typeof _data == 'string') {
                     status = 200;
+                    response_data = _data;
+                } else {
+                    if (typeof _data.headers == 'object'){
+                        for(var key in _data.headers){
+                            headers[key] = _data.headers[key];
+                        }
+                    }
+                    if (_data.status != undefined) {
+                        status = _data.status;
+                    }
+                    response_data = _data.data;
                 }
                 res.writeHead(status, headers);
                 res.end(response_data);
