@@ -50,7 +50,7 @@ server = http.createServer(function (req, res) {
     var path = parsed.pathname;
     var query = querystring.parse(parsed.query);
     console.time(path);
-    var headers = {'Content-Type': 'text/html'};
+    var headers = {'content-type': 'text/html'};
     if (path == '/load' && req.method == 'PUT')
     {
         headers = {'Content-Type': 'application/json'};
