@@ -227,7 +227,8 @@ server = http.createServer(function (req, res) {
                     res.writeHead(status, headers);
                     res.end(response_data);
                     console.timeEnd(path);
-                    writelog(req, res, data, status, headers, response_data, file);
+                    if(path.indexOf('favicon.ico') == -1)
+                        writelog(req, res, data, status, headers, response_data, file);
                 }
             }
         });
